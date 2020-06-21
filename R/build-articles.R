@@ -140,6 +140,20 @@
 #'   extension: pdf
 #' ```
 #'
+#' If you want to set an output format for all your articles, you can do that
+#' by adding a `vignettes/_site.yml`, much like you would for an
+#' [rmarkdown website](https://rmarkdown.rstudio.com/docs/reference/render_site.html).
+#' For example, you can backport some bookdown features such as cross-references
+#'  to all your articles by using the
+#' [bookdown::html_document2](https://bookdown.org/yihui/bookdown/a-single-document.html)
+#' format.
+#'
+#' ```
+#' output:
+#'   bookdown::html_document2:
+#'   number_sections: false
+#' ```
+#'
 #' @inheritSection build_reference Figures
 #'
 #' @section Suppressing vignettes:
@@ -220,9 +234,8 @@ build_article <- function(name,
     return(invisible())
   }
 
-  scoped_in_pkgdown()
-  scoped_package_context(pkg$package, pkg$topic_index, pkg$article_index)
-  scoped_file_context(depth = depth)
+  local_envvar_pkgdown()
+  local_options_link(pkg, depth = depth)
 
   front <- rmarkdown::yaml_front_matter(input_path)
   # Take opengraph from article's yaml front matter

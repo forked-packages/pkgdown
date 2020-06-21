@@ -5,6 +5,29 @@ test_that("special characters are escaped", {
   expect_equal(out, "a &amp; b")
 })
 
+test_that("simple tags translated to known good values", {
+  verify_output(test_path("test-rd-html.txt"), {
+    "# Simple insertions"
+    rd2html("\\ldots")
+    rd2html("\\dots")
+    rd2html("\\R")
+    rd2html("\\cr")
+
+    "# Lists"
+    rd2html("\\itemize{\\item a}")
+    rd2html("\\enumerate{\\item a}")
+
+    "# Links"
+    rd2html("\\href{http://bar.com}{BAR}")
+    rd2html("\\email{foo@bar.com}")
+    rd2html("\\url{http://bar.com}")
+
+    "Macros"
+    rd2html("\\newcommand{\\froofy}{'froofy'} \\froofy{}")
+    rd2html("\\renewcommand{\\froofy}{'froofy'} \\froofy{}")
+  })
+})
+
 test_that("comments converted to html", {
   expect_equal(rd2html("a\n%b\nc"), c("a", "<!-- %b -->", "c"))
 })
@@ -12,11 +35,6 @@ test_that("comments converted to html", {
 test_that("simple wrappers work as expected", {
   expect_equal(rd2html("\\strong{x}"), "<strong>x</strong>")
   expect_equal(rd2html("\\strong{\\emph{x}}"), "<strong><em>x</em></strong>")
-})
-
-test_that("simple replacements work as expected", {
-  expect_equal(rd2html("\\ldots"), "...")
-  expect_equal(rd2html("\\dots"), "...")
 })
 
 test_that("subsection generates h3", {
@@ -116,42 +134,45 @@ test_that("tables with tailing \n (#978)", {
 # sexpr  ------------------------------------------------------------------
 
 test_that("code inside Sexpr is evaluated", {
-  scoped_package_context("pkgdown")
-  scoped_file_context()
-
+  local_context_eval()
   expect_equal(rd2html("\\Sexpr{1 + 2}"), "3")
 })
 
 test_that("can control \\Sexpr output", {
-  scoped_package_context("pkgdown")
-  scoped_file_context()
-
+  local_context_eval()
   expect_equal(rd2html("\\Sexpr[results=hide]{1}"), character())
   expect_equal(rd2html("\\Sexpr[results=text]{1}"), "1")
   expect_equal(rd2html("\\Sexpr[results=rd]{\"\\\\\\emph{x}\"}"), "<em>x</em>")
 })
 
 test_that("Sexpr can contain multiple expressions", {
-  scoped_package_context("pkgdown")
-  scoped_file_context()
-
+  local_context_eval()
   expect_equal(rd2html("\\Sexpr{a <- 1; a}"), "1")
 })
 
-test_that("Sexprs in file share environment", {
-  scoped_package_context("pkgdown")
-  scoped_file_context()
+test_that("Sexprs with multiple args are parsed", {
+  local_context_eval()
+  expect_equal(rd2html("\\Sexpr[results=hide,stage=build]{1}"), character())
+})
 
-  expect_equal(rd2html("\\Sexpr{a <- 1}\\Sexpr{a}"), c("1", "1"))
+test_that("Sexprs with multiple args are parsed", {
+  local_context_eval()
+  expect_error(rd2html("\\Sexpr[results=verbatim]{1}"), "not yet supported")
+})
+
+test_that("Sexprs in file share environment", {
+  local_context_eval()
+  expect_equal(rd2html("\\Sexpr{x <- 1}\\Sexpr{x}"), c("1", "1"))
+
+  local_context_eval()
+  expect_error(rd2html("\\Sexpr{x}"), "not found")
 })
 
 test_that("Sexprs run from package root", {
   skip_on_travis()
   # Because paths are different during R CMD check
   skip_if_not(file_exists("../../DESCRIPTION"))
-
-  scoped_package_context("pkgdown", src_path = "../..")
-  scoped_file_context()
+  local_context_eval(src_path = "../..")
 
   # \packageTitle is built in macro that uses DESCRIPTION
   expect_equal(
@@ -160,19 +181,10 @@ test_that("Sexprs run from package root", {
   )
 })
 
-test_that("Sexprs with multiple args are parsed", {
-  scoped_package_context("pkgdown")
-  scoped_file_context()
-
-  expect_equal(rd2html("\\Sexpr[results=hide,stage=build]{1}"), character())
-})
-
 test_that("DOIs are linked", {
   # Because paths are different during R CMD check
   skip_if_not(file_exists("../../DESCRIPTION"))
-
-  scoped_package_context("pkgdown", src_path = "../..")
-  scoped_file_context()
+  local_context_eval(src_path = "../..")
 
   expect_true(
     rd2html("\\doi{test}") %in%
@@ -184,16 +196,7 @@ test_that("DOIs are linked", {
 
 # links -------------------------------------------------------------------
 
-test_that("href orders arguments correctly", {
-  expect_equal(
-    rd2html("\\href{http://a.com}{a}"),
-    a("a", href = "http://a.com")
-  )
-})
-
 test_that("can convert cross links to online documentation url", {
-  scoped_package_context("test")
-
   expect_equal(
     rd2html("\\link[base]{library}"),
     a("library", href = "https://rdrr.io/r/base/library.html")
@@ -201,67 +204,63 @@ test_that("can convert cross links to online documentation url", {
 })
 
 test_that("can convert cross links to the same package (#242)", {
-  scoped_package_context("mypkg", c(foo = "bar", baz = "baz"))
-  scoped_file_context("baz")
+  withr::local_options(list(
+    "downlit.package" = "test",
+    "downlit.topic_index" = c(x = "y", z = "z"),
+    "downlit.rdname" = "z"
+  ))
 
-  expect_equal(
-    rd2html("\\link[mypkg]{foo}"),
-    a("foo", href_topic_local("foo"))
-  )
-  expect_equal(
-    rd2html("\\link[mypkg]{baz}"),
-    "baz"
-  )
+  expect_equal(rd2html("\\link{x}"), "<a href='y.html'>x</a>")
+  expect_equal(rd2html("\\link[test]{x}"), "<a href='y.html'>x</a>")
+  # but no self links
+  expect_equal(rd2html("\\link[test]{z}"), "z")
 })
 
 test_that("can parse local links with topic!=label", {
-  scoped_package_context("test", c(x = "y"))
-  scoped_file_context("baz")
-
-  expect_equal(
-    rd2html("\\link[=x]{z}"),
-    a("z", href_topic_local("x"))
-  )
+  withr::local_options(list(
+    "downlit.topic_index" = c(x = "y")
+  ))
+  expect_equal(rd2html("\\link[=x]{z}"), "<a href='y.html'>z</a>")
 })
 
 test_that("functions in other packages generates link to rdrr.io", {
-  scoped_package_context("mypkg", c(x = "x", y = "y"))
-  scoped_file_context("x")
+  withr::local_options(list(
+    "downlit.package" = "test",
+    "downlit.topic_index" = c(x = "y", z = "z")
+  ))
 
   expect_equal(
-    rd2html("\\link[stats:acf]{xyz}", current = current),
-    a("xyz", href_topic_remote("acf", "stats"))
+    rd2html("\\link[stats:acf]{xyz}"),
+    a("xyz", downlit::href_topic("acf", "stats"))
   )
 
   # Unless it's the current package
+  expect_equal(rd2html("\\link[test:x]{xyz}"), "<a href='y.html'>xyz</a>")
+})
+
+test_that("link to non-existing functions return label", {
+  expect_equal(rd2html("\\link[xyzxyz:xyzxyz]{abc}"), "abc")
+  expect_equal(rd2html("\\link[base:xyzxyz]{abc}"), "abc")
+})
+
+test_that("code blocks autolinked to vignettes", {
+  withr::local_options(list(
+    "downlit.package" = "test",
+    "downlit.article_index" = c("abc" = "abc.html")
+  ))
+
   expect_equal(
-    rd2html("\\link[mypkg:y]{xyz}", current = current),
-    a("xyz", href_topic_local("y"))
+    rd2html("\\code{vignette('abc')}"),
+    "<code><a href='abc.html'>vignette('abc')</a></code>"
   )
 })
 
 test_that("link to non-existing functions return label", {
-  scoped_package_context("mypkg")
-  scoped_file_context("x")
-
-  expect_equal(
-    rd2html("\\link[xyzxyz:xyzxyz]{abc}", current = current),
-    "abc"
-  )
-  expect_equal(
-    rd2html("\\link[base:xyzxyz]{abc}", current = current),
-    "abc"
-  )
-})
-
-test_that("code blocks autolinked to vignettes", {
-  scoped_package_context("test", article_index = c("abc" = "abc.html"))
-  scoped_file_context(depth = 1L)
-
-  expect_equal(
-    rd2html("\\code{vignette('abc')}"),
-    "<code><a href='../articles/abc.html'>vignette('abc')</a></code>"
-  )
+  withr::local_options(list(
+    "downlit.package" = "test",
+    "downlit.topic_index" = c("TEST-class" = "test")
+  ))
+  expect_equal(rd2html("\\linkS4class{TEST}"), "<a href='test.html'>TEST</a>")
 })
 
 # Paragraphs --------------------------------------------------------------
@@ -325,14 +324,13 @@ test_that("nested item with whitespace parsed correctly", {
 
 # Verbatim ----------------------------------------------------------------
 
-test_that("parseable preformatted blocks are highlighted", {
-  scoped_package_context("test")
-  out <- flatten_para(rd_text("\\preformatted{1}"))
-  expect_equal(out, "<pre><span class='fl'>1</span></pre>\n")
-
-  out <- flatten_para(rd_text("\\preformatted{1 > 2}"))
-  expect_equal(out, "<pre><span class='fl'>1</span> <span class='kw'>&gt;</span> <span class='fl'>2</span></pre>\n")
-})
+# test_that("parseable preformatted blocks are highlighted", {
+#   out <- flatten_para(rd_text("\\preformatted{1}"))
+#   expect_equal(out, "<pre><span class='fl'>1</span></pre>\n")
+#
+#   out <- flatten_para(rd_text("\\preformatted{1 > 2}"))
+#   expect_equal(out, "<pre><span class='fl'>1</span> <span class='op'>&gt;</span> <span class='fl'>2</span></pre>\n")
+# })
 
 test_that("unparseable blocks aren't double escaped", {
   out <- flatten_para(rd_text("\\preformatted{\\%>\\%}"))
@@ -361,8 +359,11 @@ test_that("S3 methods gets comment", {
   out <- rd2html("\\S3method{fun}{class}(x, y)")
   expect_equal(out[1], "# S3 method for class")
   expect_equal(out[2], "fun(x, y)")
-})
 
+  out <- rd2html("\\method{fun}{class}(x, y)")
+  expect_equal(out[1], "# S3 method for class")
+  expect_equal(out[2], "fun(x, y)")
+})
 
 test_that("eqn", {
   out <- rd2html(" \\eqn{\\alpha}{alpha}")
@@ -413,7 +414,6 @@ test_that("figures are converted to img", {
   )
 })
 
-
 # titles ------------------------------------------------------------------
 
 test_that("multiline titles are collapsed", {
@@ -437,22 +437,11 @@ test_that("titles don't get autolinked code", {
 # Rd tag errors ------------------------------------------------------------------
 
 test_that("bad Rd tags throw errors", {
-  scoped_file_context("test-rd-html.R")
-
-  expect_error(
-    rd2html("\\url{}"),
-    "contains a bad Rd tag of type `url`. Check for empty"
-  )
-  expect_error(
-    rd2html("\\url{a\nb}"),
-    "contains a bad Rd tag of type `url`. This may be"
-  )
-  expect_error(
-    rd2html("\\email{}"),
-    "contains a bad Rd tag of type `email`"
-  )
-  expect_error(
-    rd2html("\\linkS4class{}"),
-    "contains a bad Rd tag of type `linkS4class`"
-  )
+  verify_output(test_path("test-rd-html-error.txt"), {
+    rd2html("\\url{}")
+    rd2html("\\url{a\nb}")
+    rd2html("\\email{}")
+    rd2html("\\linkS4class{}")
+    rd2html("\\enc{}")
+  })
 })
