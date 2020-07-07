@@ -2,9 +2,11 @@ on:
   push:
     branches:
       - master
+      - copy-of-fix-955
   pull_request:
     branches:
       - master
+      - copy-of-fix-955
 
 name: R-CMD-check
 
