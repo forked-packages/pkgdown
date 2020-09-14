@@ -7,11 +7,12 @@
 \figure{bacon.jpg}
 }
 \examples{
-x <- seq(0, 2 * pi, length = 25)
+x <- seq(0, 2 * pi, length.out = 25)
 plot(x, sin(x))
 
 plot(1:10)
 lines(1:10)
+text(2, 5, "Hello", srt = 30, cex = 2)
 }
 \seealso{
 Other tests: 
@@ -22,6 +23,7 @@ Other tests:
 \code{\link{test-lists}},
 \code{\link{test-output-styles}},
 \code{\link{test-params}},
+\code{\link{test-sexpr-title}},
 \code{\link{test-verbatim}}
 }
 \concept{tests}

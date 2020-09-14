@@ -102,7 +102,7 @@
 #'
 #' ```
 #' figures:
-#'   dev: grDevices::png
+#'   dev: ragg::agg_png
 #'   dpi: 96
 #'   dev.args: []
 #'   fig.ext: png
@@ -110,6 +110,7 @@
 #'   fig.height: ~
 #'   fig.retina: 2
 #'   fig.asp: 1.618
+#'   bg: NA
 #' ```
 #'
 #' @inheritParams build_articles
@@ -274,8 +275,7 @@ data_reference_topic <- function(topic,
   # Single top-level converted to string
   out$name <- flatten_text(tags$tag_name[[1]][[1]])
   out$title <- extract_title(tags$tag_title)
-
-  out$pagetitle <- paste0(out$title, " \u2014 ", out$name)
+  out$pagetitle <- paste0(strip_html_tags(out$title), " \u2014 ", out$name)
 
   # File source
   out$source <- repo_source(pkg, topic$source)
