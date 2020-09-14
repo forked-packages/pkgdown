@@ -48,7 +48,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">pkgdown</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.5.1.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.6.1.9000</span>
       </span>
     </div>
 
@@ -97,6 +97,9 @@
   <ul class="dropdown-menu" role="menu">
 <li class="dropdown-header">Releases</li>
     <li>
+      <a href="https://www.tidyverse.org/blog/2020/09/pkgdown-1-6-0/">Version 1.6.0</a>
+    </li>
+    <li>
       <a href="https://www.tidyverse.org/blog/2020/03/pkgdown-1-5-0/">Version 1.5.0</a>
     </li>
     <li>
@@ -141,7 +144,7 @@
 
       
 
-      </header><div class="row">
+      </header><script src="linking_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Auto-linking</h1>
@@ -160,7 +163,7 @@
 <p>pkgdown will automatically link to documentation and articles wherever it’s possible to do unambiguously. This includes:</p>
 <ul>
 <li>Bare function calls, like <code><a href="../reference/build_site.html">build_site()</a></code>.</li>
-<li>Calls to <code>?</code>, like <code><a href="../reference/build_site.html">?build_site</a></code> or <code><a href="../reference/pkgdown-package.html">package?pkgdown</a></code>.</li>
+<li>Calls to <code><a href="https://rdrr.io/r/utils/Question.html">?</a></code>, like <code><a href="../reference/build_site.html">?build_site</a></code> or <code><a href="../reference/pkgdown-package.html">package?pkgdown</a></code>.</li>
 <li>Calls to <code>help()</code>, like <code><a href="../reference/pkgdown-package.html">help("pkgdown")</a></code>.</li>
 <li>Calls to <code>vignette()</code>, like <code><a href="../articles/pkgdown.html">vignette("pkgdown")</a></code>.</li>
 </ul>
@@ -178,11 +181,11 @@
 <code><a href="https://purrr.tidyverse.org/articles/other-langs.html">vignette("other-langs", package = "purrr")</a></code>, <code><a href="https://cran.rstudio.com/web/packages/rpart/vignettes/longintro.pdf">vignette("longintro", package = "rpart")</a></code>
 </li>
 </ul>
-<p>If pkgdown can find a pkgdown site for the remote package, it will link to it; otherwise it will link to <a href="http://rdrr.io/" class="uri">http://rdrr.io/</a> for documentation, and CRAN for vignettes. In order for a pkgdown site to be findable, it needs to be listed in two places:</p>
+<p>If pkgdown can find a pkgdown site for the remote package, it will link to it; otherwise it will link to <a href="https://rdrr.io/" class="uri">https://rdrr.io/</a> for documentation, and CRAN for vignettes. In order for a pkgdown site to be findable, it needs to be listed in two places:</p>
 <ul>
 <li>
 <p>In the <code>URL</code> field in the <code>DESCRIPTION</code>, as in <a href="https://github.com/tidyverse/dplyr/blob/85faf79c1fd74f4b4f95319e5be6a124a8075502/DESCRIPTION#L15">dplyr</a>:</p>
-<pre><code>URL: http://dplyr.tidyverse.org, https://github.com/tidyverse/dplyr</code></pre>
+<pre><code>URL: https://dplyr.tidyverse.org, https://github.com/tidyverse/dplyr</code></pre>
 </li>
 <li>
 <p>In the <code>url</code> field in <code>_pkgdown.yml</code>, as in <a href="https://github.com/tidyverse/dplyr/blob/master/_pkgdown.yml#L1">dplyr</a></p>
@@ -223,7 +226,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.9000.</p>
 </div>
 
       </footer>
